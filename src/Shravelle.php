@@ -34,10 +34,11 @@ final class Shravelle
         $env = function ($k, $d = '') { $v = getenv($k); return ($v === false || $v === '') ? $d : $v; };
         self::$cfg = [
             'endpoint'    => rtrim($opts['endpoint'] ?? $env('SHRAVELLE_ENDPOINT', 'http://localhost:4318'), '/'),
-            'api_key'     => $opts['api_key'] ?? $env('SHRAVELLE_API_KEY'),
-            'service'     => $opts['service'] ?? $env('SHRAVELLE_SERVICE_NAME', 'php-app'),
-            'version'     => $opts['version'] ?? $env('SHRAVELLE_SERVICE_VERSION'),
-            'environment' => $opts['environment'] ?? $env('SHRAVELLE_ENV', 'production'),
+            'api_key'     => $opts['api_key'] ?? $env('SHRAVELLE_API_KEY', $env('SHRAVELLE_LICENSE_KEY')),
+            'service'     => $opts['service'] ?? $env('SHRAVELLE_APP_NAME', $env('SHRAVELLE_SERVICE_NAME', 'php-app')),
+            'version'     => $opts['version'] ?? $env('SHRAVELLE_APP_VERSION', $env('SHRAVELLE_SERVICE_VERSION')),
+            'environment' => $opts['environment'] ?? $env('SHRAVELLE_APP_ENV', $env('SHRAVELLE_ENV', 'production')),
+            'organisation' => $opts['organisation'] ?? $env('SHRAVELLE_ORGANISATION', $env('SHRAVELLE_ORGANIZATION')),
             'sample_rate' => (float)($opts['sample_rate'] ?? $env('SHRAVELLE_SAMPLE_RATE', '1')),
             'capture_errors' => $opts['capture_errors'] ?? true,
             'timeout'     => (float)($opts['timeout'] ?? 2.0),
@@ -252,10 +253,10 @@ final class Shravelle
         }
         $sampled = self::$cfg['sample_rate'] >= 1 || (hexdec(substr(self::$traceId, 0, 8)) / 0xffffffff) < self::$cfg['sample_rate'];
         $hasError = self::$spans[self::$root]['status']['code'] === 2;
-        $resource = ['attributes' => self::kv([
+        $resource = ['attributes' => self::kv(array_merge([
             'service.name' => self::$cfg['service'], 'service.version' => self::$cfg['version'], 'deployment.environment.name' => self::$cfg['environment'],
             'host.name' => gethostname(), 'process.runtime.name' => 'php', 'process.runtime.version' => PHP_VERSION, 'telemetry.distro.name' => 'shravelle-php',
-        ])];
+        ], self::$cfg['organisation'] !== '' ? ['shravelle.organization' => self::$cfg['organisation']] : []))];
         if ($sampled || $hasError) {
             $spans = [];
             foreach (self::$spans as $s) {
