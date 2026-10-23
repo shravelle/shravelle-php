@@ -1,0 +1,10 @@
+{
+  "name": "shravelle/shravelle-php",
+  "description": "Shravelle APM for PHP: request tracing, errors, logs, database/external segments. Zero dependencies; works on shared hosting. Laravel integration included.",
+  "type": "library",
+  "license": "MIT",
+  "require": { "php": ">=7.4", "ext-json": "*" },
+  "suggest": { "ext-curl": "faster, non-blocking delivery", "open-telemetry/opentelemetry-auto-laravel": "full OpenTelemetry auto-instrumentation" },
+  "autoload": { "psr-4": { "Shravelle\\": "src/" } },
+  "extra": { "laravel": { "providers": ["Shravelle\\Laravel\\ShravelleServiceProvider"] } }
+}
