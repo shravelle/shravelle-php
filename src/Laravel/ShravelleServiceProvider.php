@@ -14,12 +14,12 @@ use Shravelle\Shravelle;
  */
 class ShravelleServiceProvider extends ServiceProvider
 {
-    public function register(): void
+    public function register()
     {
         Shravelle::init(['service' => env('SHRAVELLE_SERVICE_NAME', config('app.name', 'laravel'))]);
     }
 
-    public function boot(): void
+    public function boot()
     {
         DB::listen(function (QueryExecuted $q) {
             Shravelle::recordQuery($q->sql, (float)$q->time, $q->connection->getDriverName(), $q->connection->getDatabaseName());
