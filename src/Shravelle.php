@@ -26,7 +26,7 @@ final class Shravelle
     private static $logs = [];
     private static $start = 0.0;
 
-    public static function init(array $opts = []): void
+    public static function init(array $opts = [])
     {
         if (self::$cfg !== null) {
             return;
@@ -68,7 +68,7 @@ final class Shravelle
     }
 
     /** Record a database query that already ran (e.g. from a query listener). */
-    public static function recordQuery(string $sql, float $durationMs, string $system = 'mysql', string $db = ''): void
+    public static function recordQuery(string $sql, float $durationMs, string $system = 'mysql', string $db = '')
     {
         $end = microtime(true);
         $id = self::open(strtoupper(preg_split('/\s+/', ltrim($sql), 2)[0]) ?: 'QUERY', 'client', [
@@ -78,7 +78,7 @@ final class Shravelle
     }
 
     /** Record an outgoing HTTP call that already ran. */
-    public static function recordExternal(string $method, string $url, int $status, float $durationMs): void
+    public static function recordExternal(string $method, string $url, int $status, float $durationMs)
     {
         $end = microtime(true);
         $host = parse_url($url, PHP_URL_HOST) ?: $url;
@@ -91,7 +91,7 @@ final class Shravelle
         self::close($id, $end);
     }
 
-    public static function noticeError(\Throwable $e, array $attributes = []): void
+    public static function noticeError(\Throwable $e, array $attributes = [])
     {
         self::recordException(end(self::$stack) ?: self::$root, $e, $attributes);
         self::log('ERROR', get_class($e) . ': ' . $e->getMessage(), $attributes + [
@@ -99,28 +99,28 @@ final class Shravelle
         ]);
     }
 
-    public static function setUser(string $id): void { self::addAttribute('enduser.id', $id); }
+    public static function setUser(string $id) { self::addAttribute('enduser.id', $id); }
 
-    public static function setTransactionName(string $name): void
+    public static function setTransactionName(string $name)
     {
         if (self::$root) {
             self::$spans[self::$root]['name'] = $name;
         }
     }
 
-    public static function addAttribute(string $key, $value): void
+    public static function addAttribute(string $key, $value)
     {
         if (self::$root) {
             self::$spans[self::$root]['attrs'][$key] = $value;
         }
     }
 
-    public static function recordEvent(string $name, array $attributes = []): void
+    public static function recordEvent(string $name, array $attributes = [])
     {
         self::log('INFO', $name, ['event.name' => $name] + $attributes);
     }
 
-    public static function log(string $level, string $message, array $attributes = []): void
+    public static function log(string $level, string $message, array $attributes = [])
     {
         $sev = ['TRACE' => 1, 'DEBUG' => 5, 'INFO' => 9, 'NOTICE' => 10, 'WARN' => 13, 'WARNING' => 13, 'ERROR' => 17, 'CRITICAL' => 18, 'FATAL' => 21];
         $level = strtoupper($level);
@@ -148,7 +148,7 @@ final class Shravelle
 
     // ------------------------------------------------------------ internals
 
-    private static function startTransaction(): void
+    private static function startTransaction()
     {
         $tp = $_SERVER['HTTP_TRACEPARENT'] ?? '';
         $parent = '';
@@ -168,7 +168,7 @@ final class Shravelle
         self::$root = self::open($cli ? 'php ' . $path : $method . ' ' . $path, $cli ? 'internal' : 'server', $attrs, self::$start, $parent);
     }
 
-    private static function open(string $name, string $kind, array $attrs = [], ?float $start = null, string $parentId = ''): string
+    private static function open(string $name, string $kind, array $attrs = [], float $start = null, string $parentId = ''): string
     {
         $id = bin2hex(random_bytes(8));
         if ($parentId === '' && ($p = end(self::$stack))) {
@@ -180,7 +180,7 @@ final class Shravelle
         return $id;
     }
 
-    private static function close(string $id, ?float $end = null): void
+    private static function close(string $id, $end = null)
     {
         self::$spans[$id]['end'] = $end ?? microtime(true);
         $i = array_search($id, self::$stack, true);
@@ -189,7 +189,7 @@ final class Shravelle
         }
     }
 
-    private static function recordException($id, \Throwable $e, array $attrs = []): void
+    private static function recordException($id, \Throwable $e, array $attrs = [])
     {
         if (!$id || !isset(self::$spans[$id])) {
             return;
@@ -205,7 +205,7 @@ final class Shravelle
         return get_class($e) . ': ' . $e->getMessage() . "\n    at " . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString();
     }
 
-    private static function installHandlers(): void
+    private static function installHandlers()
     {
         $prevEx = set_exception_handler(null);
         set_exception_handler(function (\Throwable $e) use ($prevEx) {
@@ -229,7 +229,7 @@ final class Shravelle
     }
 
     /** @internal shutdown hook: closes the transaction and sends telemetry. */
-    public static function finish(): void
+    public static function finish()
     {
         if (self::$cfg === null || self::$root === null) {
             return;
@@ -275,7 +275,7 @@ final class Shravelle
         self::$root = null;
     }
 
-    private static function post(string $path, string $body, ?float $timeout = null): bool
+    private static function post(string $path, string $body, float $timeout = null): bool
     {
         $url = self::$cfg['endpoint'] . $path;
         $headers = ['Content-Type: application/json', 'X-API-Key: ' . self::$cfg['api_key']];
